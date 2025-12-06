@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sarthak 2.0 // NEXUS</title>
+    <title>Sarthak 2.1 // ANALYTICS</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         :root {
             --bg: #020617;
-            --surface: rgba(15, 23, 42, 0.7);
+            --surface: rgba(15, 23, 42, 0.8);
             --border: rgba(255, 255, 255, 0.08);
             --accent: #38bdf8;
             --danger: #ef4444;
@@ -42,11 +44,12 @@
             border: 1px solid var(--border);
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
             height: 90vh;
             max-height: 850px;
+            transition: height 0.3s ease;
         }
 
         /* HEADER */
@@ -62,15 +65,29 @@
         .brand h1 { margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; }
         .brand span { font-size: 0.7rem; color: var(--accent); font-family: 'JetBrains Mono'; letter-spacing: 1px; }
 
-        .system-status {
-            font-family: 'JetBrains Mono';
-            font-size: 0.7rem;
-            color: var(--success);
-            background: rgba(16, 185, 129, 0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            border: 1px solid rgba(16, 185, 129, 0.2);
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+
+        .icon-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
+        .icon-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        .icon-btn:hover { color: var(--text); border-color: var(--text-dim); }
+
+        /* VIEW CONTAINERS */
+        .view-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        #analyticsView { display: none; padding: 20px; overflow-y: auto; }
 
         /* INPUT AREA */
         .controls { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
@@ -161,6 +178,31 @@
         }
         .delete-btn:hover { color: var(--danger); }
 
+        /* ANALYTICS STYLES */
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text); font-family: 'JetBrains Mono'; }
+        .stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; margin-top: 5px; }
+
         /* FOOTER */
         .footer {
             padding: 15px 20px;
@@ -184,44 +226,80 @@
 
         <div class="header">
             <div class="brand">
-                <h1>Sarthak 2.0</h1>
-                <span>SYSTEM UPGRADE COMPLETE</span>
+                <h1>Sarthak 2.1</h1>
+                <span>ANALYTICS MODULE</span>
             </div>
-            <div class="system-status" id="status">OFFLINE</div>
-        </div>
-
-        <div class="controls">
-            <div class="input-row">
-                <input type="text" id="taskInput" placeholder="Enter new directive...">
-            </div>
-            <div class="options-row">
-                <select id="catSelect">
-                    <option value="General">General</option>
-                    <option value="Code">Code</option>
-                    <option value="Study">Study</option>
-                    <option value="Fitness">Fitness</option>
-                </select>
-                <select id="prioSelect">
-                    <option value="Normal">Normal Priority</option>
-                    <option value="High">High Priority</option>
-                    <option value="Low">Low Priority</option>
-                </select>
-                <button class="add-btn" onclick="addTask()">ADD</button>
+            <div class="header-actions">
+                <button class="icon-btn active" id="btnList" onclick="switchView('list')" title="List View">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                </button>
+                <button class="icon-btn" id="btnChart" onclick="switchView('chart')" title="Analytics View">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                </button>
             </div>
         </div>
 
-        <div class="task-list" id="list">
+        <div id="listView" class="view-section">
+            <div class="controls">
+                <div class="input-row">
+                    <input type="text" id="taskInput" placeholder="Enter new directive...">
+                </div>
+                <div class="options-row">
+                    <select id="catSelect">
+                        <option value="General">General</option>
+                        <option value="Code">Code</option>
+                        <option value="Study">Study</option>
+                        <option value="Fitness">Fitness</option>
+                    </select>
+                    <select id="prioSelect">
+                        <option value="Normal">Normal Prio</option>
+                        <option value="High">High Prio</option>
+                        <option value="Low">Low Prio</option>
+                    </select>
+                    <button class="add-btn" onclick="addTask()">ADD</button>
+                </div>
             </div>
+
+            <div class="task-list" id="list">
+                </div>
+        </div>
+
+        <div id="analyticsView" class="view-section">
+            <div class="chart-container">
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="statCompletion">0%</div>
+                    <div class="stat-label">Completion Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statHighPrio">0</div>
+                    <div class="stat-label">High Priority</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statPending">0</div>
+                    <div class="stat-label">Pending Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Volume</div>
+                </div>
+            </div>
+        </div>
 
         <div class="footer">
-            <span id="stats">0 Active / 0 Total</span>
+            <span id="sysStatus" style="color:var(--success)">SYSTEM ONLINE</span>
             <span>AUTO-RESET: ON</span>
         </div>
     </div>
 
 <script>
-    // URL
     const API_URL = "https://sarthak-tasks-backend.onrender.com";
+    
+    // State
+    let currentTasks = [];
+    let myChart = null;
 
     const dom = {
         input: document.getElementById('taskInput'),
@@ -229,8 +307,21 @@
         prio: document.getElementById('prioSelect'),
         list: document.getElementById('list'),
         loader: document.getElementById('loader'),
-        status: document.getElementById('status'),
-        stats: document.getElementById('stats')
+        sysStatus: document.getElementById('sysStatus'),
+        views: {
+            list: document.getElementById('listView'),
+            chart: document.getElementById('analyticsView')
+        },
+        btns: {
+            list: document.getElementById('btnList'),
+            chart: document.getElementById('btnChart')
+        },
+        stats: {
+            completion: document.getElementById('statCompletion'),
+            high: document.getElementById('statHighPrio'),
+            pending: document.getElementById('statPending'),
+            total: document.getElementById('statTotal')
+        }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -238,24 +329,37 @@
         dom.input.addEventListener('keydown', e => e.key === 'Enter' && addTask());
     });
 
+    // --- NAVIGATION ---
+    function switchView(viewName) {
+        // Toggle DOM visibility
+        dom.views.list.style.display = viewName === 'list' ? 'flex' : 'none';
+        dom.views.chart.style.display = viewName === 'chart' ? 'block' : 'none';
+        
+        // Toggle Buttons
+        dom.btns.list.classList.toggle('active', viewName === 'list');
+        dom.btns.chart.classList.toggle('active', viewName === 'chart');
+
+        if(viewName === 'chart') updateAnalytics();
+    }
+
+    // --- CORE LOGIC ---
     async function loadTasks() {
         toggleLoader(true);
-        dom.status.innerText = "SYNCING...";
-        dom.status.style.color = "#fbbf24"; // Warning color
+        dom.sysStatus.innerText = "SYNCING...";
+        dom.sysStatus.style.color = "#f59e0b";
 
         try {
             const res = await fetch(`${API_URL}/tasks`);
             if(!res.ok) throw new Error("Server Error");
-            const tasks = await res.json();
+            currentTasks = await res.json(); // Save to global state
             
-            render(tasks);
-            dom.status.innerText = "ONLINE";
-            dom.status.style.color = "#10b981"; // Success color
+            render(currentTasks);
+            dom.sysStatus.innerText = "SYSTEM ONLINE";
+            dom.sysStatus.style.color = "#10b981";
         } catch (err) {
             console.error(err);
-            dom.status.innerText = "OFFLINE";
-            dom.status.style.color = "#ef4444"; // Danger color
-            dom.list.innerHTML = `<div style="text-align:center; padding:20px; color:#64748b">Unable to connect to Sarthak Backend.<br>Render server might be sleeping.</div>`;
+            dom.sysStatus.innerText = "CONNECTION FAILED";
+            dom.sysStatus.style.color = "#ef4444";
         } finally {
             toggleLoader(false);
         }
@@ -264,13 +368,8 @@
     async function addTask() {
         const text = dom.input.value.trim();
         if(!text) return;
-
         toggleLoader(true);
-        const payload = {
-            task: text,
-            category: dom.cat.value,
-            priority: dom.prio.value
-        };
+        const payload = { task: text, category: dom.cat.value, priority: dom.prio.value };
 
         try {
             await fetch(`${API_URL}/add`, {
@@ -280,48 +379,34 @@
             });
             dom.input.value = "";
             loadTasks();
-        } catch(err) {
-            alert("Failed to add task");
-        } finally {
-            toggleLoader(false);
-        }
+        } catch(err) { alert("Failed to add task"); }
+        finally { toggleLoader(false); }
     }
 
     async function toggleTask(index) {
-        // Optimistic UI update (feels faster)
-        const card = document.getElementById(`task-${index}`);
-        card.classList.toggle('done');
-        
+        document.getElementById(`task-${index}`).classList.toggle('done');
         try {
             await fetch(`${API_URL}/toggle/${index}`, { method: "POST" });
-            loadTasks(); // Sync specifically to update stats
-        } catch(err) {
-            console.error("Toggle failed");
-            loadTasks(); // Revert on error
-        }
+            loadTasks(); 
+        } catch(err) { loadTasks(); }
     }
 
     async function deleteTask(index) {
-        if(!confirm("Terminate this task?")) return;
+        if(!confirm("Confirm Deletion?")) return;
         toggleLoader(true);
         try {
             await fetch(`${API_URL}/delete/${index}`, { method: "DELETE" });
             loadTasks();
-        } catch(err) {
-            alert("Delete failed");
-        } finally {
-            toggleLoader(false);
-        }
+        } catch(err) { alert("Delete failed"); }
+        finally { toggleLoader(false); }
     }
+
+    // --- RENDER & ANALYTICS ---
 
     function render(tasks) {
         dom.list.innerHTML = "";
-        
-        const activeCount = tasks.filter(t => !t.done).length;
-        dom.stats.innerText = `${activeCount} PENDING / ${tasks.length} TOTAL`;
-
         if(tasks.length === 0) {
-            dom.list.innerHTML = `<div style="text-align:center; padding:30px; color:#64748b; font-size:0.9rem;">System Idle. No directives found.</div>`;
+            dom.list.innerHTML = `<div style="text-align:center; padding:30px; color:#64748b;">No active directives.</div>`;
             return;
         }
 
@@ -334,9 +419,8 @@
                     <div class="checkbox" onclick="toggleTask(${i})"></div>
                     <div class="task-content">
                         <div class="task-meta">
-                            <span class="badge ${isHigh}">${t.priority.toUpperCase()}</span>
-                            <span class="badge">${t.category.toUpperCase()}</span>
-                            <span style="color:#64748b">${t.timestamp || ''}</span>
+                            <span class="badge ${isHigh}">${t.priority}</span>
+                            <span class="badge">${t.category}</span>
                         </div>
                         <div class="task-text">${escapeHtml(t.text)}</div>
                     </div>
@@ -345,12 +429,61 @@
             `;
             dom.list.insertAdjacentHTML('beforeend', html);
         });
+        
+        // Update charts if we are on analytics view
+        if(dom.views.chart.style.display === 'block') updateAnalytics();
     }
 
-    function toggleLoader(show) {
-        dom.loader.style.display = show ? 'block' : 'none';
+    function updateAnalytics() {
+        if (!currentTasks.length) return;
+
+        // 1. Calculate Stats
+        const total = currentTasks.length;
+        const done = currentTasks.filter(t => t.done).length;
+        const highPrio = currentTasks.filter(t => !t.done && t.priority === 'High').length;
+        const pending = total - done;
+
+        // 2. Update Grid
+        dom.stats.total.innerText = total;
+        dom.stats.pending.innerText = pending;
+        dom.stats.high.innerText = highPrio;
+        dom.stats.completion.innerText = Math.round((done / total) * 100) + "%";
+
+        // 3. Prepare Chart Data (Category Distribution)
+        const categories = {};
+        currentTasks.forEach(t => {
+            if(!t.done) { // Only chart pending tasks? Or all? Let's do ALL.
+                categories[t.category] = (categories[t.category] || 0) + 1;
+            }
+        });
+
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        
+        // Destroy old chart to prevent glitching
+        if(myChart) myChart.destroy();
+
+        // Create New Chart
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(categories),
+                datasets: [{
+                    data: Object.values(categories),
+                    backgroundColor: ['#38bdf8', '#818cf8', '#34d399', '#f472b6'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#94a3b8', font: {family: 'JetBrains Mono'} } }
+                }
+            }
+        });
     }
 
+    function toggleLoader(show) { dom.loader.style.display = show ? 'block' : 'none'; }
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
