@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sarthak 1.0 // Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.3);
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        * { box-sizing: border-box; outline: none; }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+            color: var(--text-main); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        h1 {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+            text-align: center;
+            background: linear-gradient(90deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        input {
+            flex-grow: 1;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        button.add-btn {
+            padding: 14px 24px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent), #0ea5e9);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        button.add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px var(--accent-glow);
+        }
+
+        button.add-btn:active { transform: translateY(0); }
+
+        #taskList {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* Scrollbar styling */
+        #taskList::-webkit-scrollbar { width: 6px; }
+        #taskList::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+        .task-card {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        .task-card:hover {
+            border-color: rgba(255,255,255,0.2);
+            transform: scale(1.02);
+        }
+
+        .task-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .task-number {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            font-family: monospace;
+            background: rgba(255,255,255,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: #64748b;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+            transform: rotate(90deg);
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Loader */
+        .loading { text-align: center; color: var(--text-sub); font-size: 0.9rem; margin-top: 20px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Sarthak 1.0</h1>
+        <div class="subtitle">Operational Task Tracker</div>
+
+        <div class="input-group">
+            <input type="text" id="taskInput" placeholder="Initialize new protocol..." onkeypress="handleEnter(event)">
+            <button class="add-btn" onclick="addTask()">ADD</button>
+        </div>
+
+        <div id="taskList">
+            <div class="loading">Syncing with server...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:5000";
+
+        // Handle Enter key
+        function handleEnter(e) {
+            if (e.key === "Enter") addTask();
+        }
+
+        async function loadTasks() {
+            const list = document.getElementById("taskList");
+            
+            try {
+                const res = await fetch(`${API_URL}/tasks`);
+                if (!res.ok) throw new Error("Server Offline");
+                
+                const tasks = await res.json();
+                list.innerHTML = "";
+
+                if(tasks.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; color:#64748b; padding:20px;">No active tasks. System idle.</div>`;
+                    return;
+                }
+
+                tasks.forEach((t, i) => {
+                    const div = document.createElement("div");
+                    div.className = "task-card";
+                    // Delayed animation for staggering effect
+                    div.style.animationDelay = `${i * 0.05}ms`;
+                    
+                    div.innerHTML = `
+                        <div class="task-content">
+                            <span class="task-number">#${String(i+1).padStart(2, '0')}</span>
+                            <span>${t}</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteTask(${i})" title="Terminate Task">×</button>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (err) {
+                list.innerHTML = `<div style="color:var(--danger); text-align:center;">⚠ Connection Error: Is Flask running?</div>`;
+            }
+        }
+
+        async function addTask() {
+            const input = document.getElementById("taskInput");
+            const task = input.value.trim();
+            const btn = document.querySelector(".add-btn");
+
+            if (!task) {
+                input.style.borderColor = "var(--danger)";
+                setTimeout(() => input.style.borderColor = "#334155", 1000);
+                return;
+            }
+
+            // Visual feedback during request
+            const originalText = btn.innerText;
+            btn.innerText = "...";
+            btn.disabled = true;
+
+            try {
+                await fetch(`${API_URL}/add`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ task })
+                });
+                input.value = "";
+                input.focus();
+                loadTasks();
+            } catch (err) {
+                alert("Failed to add task. Check console.");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteTask(index) {
+            // Optimistic UI update could go here, but sticking to reliable fetch for now
+            try {
+                await fetch(`${API_URL}/delete/${index}`, { method: "DELETE" });
+                loadTasks();
+            } catch (err) {
+                console.error("Deletion failed");
+            }
+        }
+
+        // Auto-load on start
+        loadTasks();
+    </script>
+</body>
+</html>
