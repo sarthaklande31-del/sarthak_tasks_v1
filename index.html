@@ -2,493 +2,281 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sarthak 2.1 // ANALYTICS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartSort Ultimate</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <style>
-        :root {
-            --bg: #020617;
-            --surface: rgba(15, 23, 42, 0.8);
-            --border: rgba(255, 255, 255, 0.08);
-            --accent: #38bdf8;
-            --danger: #ef4444;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --text: #f1f5f9;
-            --text-dim: #64748b;
-        }
+        :root { --bg: #202124; --sidebar: #202124; --card: #202124; --border: #5f6368; --text: #e8eaed; --accent: #fbbc04; }
+        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        /* SIDEBAR */
+        .sidebar { width: 80px; background: var(--sidebar); display: flex; flex-direction: column; align-items: center; padding-top: 20px; transition: 0.3s; border-right: 1px solid transparent; }
+        .sidebar:hover { width: 250px; align-items: flex-start; padding-left: 20px; border-right: 1px solid var(--border); }
+        .nav-item { display: flex; align-items: center; gap: 20px; padding: 15px; cursor: pointer; color: #9aa0a6; width: 100%; border-radius: 0 25px 25px 0; }
+        .nav-item:hover, .nav-item.active { background: #41331c; color: var(--accent); }
+        .nav-text { display: none; white-space: nowrap; font-size: 16px; font-weight: 500; }
+        .sidebar:hover .nav-text { display: block; }
 
-        body {
-            margin: 0;
-            background: var(--bg);
-            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 80%);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 15px;
-        }
+        /* MAIN AREA */
+        .main { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; position: relative;}
 
-        .interface {
-            width: 100%;
-            max-width: 600px;
-            background: var(--surface);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 50px -10px rgba(0,0,0,0.6);
-            display: flex;
-            flex-direction: column;
-            height: 90vh;
-            max-height: 850px;
-            transition: height 0.3s ease;
-        }
+        /* ANALYTICS (Floating Top Right) */
+        .analytics-card { position: absolute; top: 20px; right: 30px; width: 150px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: none; }
+        @media (min-width: 1000px) { .analytics-card { display: block; } }
 
-        /* HEADER */
-        .header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0,0,0,0.2);
-        }
-
-        .brand h1 { margin: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; }
-        .brand span { font-size: 0.7rem; color: var(--accent); font-family: 'JetBrains Mono'; letter-spacing: 1px; }
-
-        .header-actions { display: flex; gap: 10px; align-items: center; }
-
-        .icon-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-            padding: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .icon-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
-        .icon-btn:hover { color: var(--text); border-color: var(--text-dim); }
-
-        /* VIEW CONTAINERS */
-        .view-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        /* INPUT BOX */
+        .input-box { background: #202124; width: 100%; max-width: 600px; border-radius: 8px; border: 1px solid var(--border); padding: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 40px; }
+        .input-box input, .input-box textarea { width: 100%; background: none; border: none; color: white; outline: none; display: block; }
+        .input-box input { font-weight: bold; font-size: 16px; margin-bottom: 10px; display: none; }
+        .input-box textarea { font-size: 16px; resize: none; font-family: inherit; }
         
-        #analyticsView { display: none; padding: 20px; overflow-y: auto; }
+        .tools { display: none; gap: 15px; margin-top: 10px; color: #9aa0a6; align-items: center; }
+        .tool-btn { cursor: pointer; } .tool-btn:hover { color: white; }
+        .active-mic { color: #f28b82 !important; animation: pulse 1s infinite; }
 
-        /* INPUT AREA */
-        .controls { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        /* GRID */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; width: 100%; max-width: 1200px; }
+        .note-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 15px; position: relative; transition: 0.2s; white-space: pre-wrap; min-height: 100px; cursor: default; }
+        .note-card:hover { border-color: #9aa0a6; }
         
-        .input-row { display: flex; gap: 10px; }
+        .pin-icon { position: absolute; top: 10px; right: 10px; opacity: 0; cursor: pointer; transform: rotate(45deg); }
+        .note-card:hover .pin-icon { opacity: 1; }
+        .pinned { opacity: 1 !important; color: var(--accent); }
         
-        input[type="text"] {
-            flex: 1;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--border);
-            padding: 12px;
-            border-radius: 10px;
-            color: white;
-            font-family: 'JetBrains Mono';
-        }
+        .due-date { font-size: 11px; border: 1px solid #5f6368; border-radius: 10px; padding: 2px 8px; display: inline-block; margin-top: 8px; color: #9aa0a6; }
 
-        .options-row { display: flex; gap: 10px; }
+        /* MODALS */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 200; justify-content: center; align-items: center; }
+        .modal { background: var(--bg); width: 600px; border-radius: 8px; padding: 20px; border: 1px solid var(--border); }
+        canvas { background: white; border-radius: 8px; cursor: crosshair; }
         
-        select {
-            background: #0f172a;
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            flex: 1;
-        }
+        .colors { display: flex; gap: 10px; margin-top: 15px; }
+        .color-dot { width: 25px; height: 25px; border-radius: 50%; border: 1px solid #5f6368; cursor: pointer; }
 
-        button.add-btn {
-            background: var(--accent);
-            color: #000;
-            border: none;
-            padding: 0 20px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        /* TASK LIST */
-        .task-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 20px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .task-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid transparent;
-            padding: 14px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.2s;
-        }
-
-        .task-card.done { opacity: 0.5; background: rgba(0,0,0,0.2); }
-        .task-card.done .task-text { text-decoration: line-through; color: var(--text-dim); }
-
-        .checkbox {
-            width: 20px; height: 20px;
-            border: 2px solid var(--text-dim);
-            border-radius: 6px;
-            cursor: pointer;
-            display: grid; place-items: center;
-        }
-        .task-card.done .checkbox { border-color: var(--success); background: rgba(16, 185, 129, 0.2); }
-        .task-card.done .checkbox::after { content: '✓'; color: var(--success); font-size: 14px; font-weight: bold; }
-
-        .task-content { flex: 1; overflow: hidden; }
-        
-        .task-meta {
-            display: flex; gap: 8px; margin-bottom: 4px; font-size: 0.7rem; font-family: 'JetBrains Mono';
-        }
-
-        .badge { padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); }
-        .badge.high { color: var(--danger); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); }
-        .badge.med { color: var(--warning); background: rgba(245, 158, 11, 0.1); }
-        
-        .task-text { font-size: 0.95rem; line-height: 1.4; }
-
-        .delete-btn {
-            background: transparent; border: none; color: var(--text-dim);
-            cursor: pointer; padding: 8px; font-size: 1.2rem;
-        }
-        .delete-btn:hover { color: var(--danger); }
-
-        /* ANALYTICS STYLES */
-        .chart-container {
-            position: relative;
-            height: 250px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .stat-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .stat-card {
-            background: rgba(255,255,255,0.03);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid var(--border);
-        }
-
-        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--text); font-family: 'JetBrains Mono'; }
-        .stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; margin-top: 5px; }
-
-        /* FOOTER */
-        .footer {
-            padding: 15px 20px;
-            border-top: 1px solid var(--border);
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            display: flex;
-            justify-content: space-between;
-            background: rgba(0,0,0,0.3);
-        }
-
-        /* LOADERS */
-        .loader-bar { height: 2px; width: 100%; background: linear-gradient(90deg, transparent, var(--accent), transparent); position: absolute; top: 0; display: none; animation: load 1s infinite; }
-        @keyframes load { 0% {transform: translateX(-100%)} 100% {transform: translateX(100%)} }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="interface">
-        <div class="loader-bar" id="loader"></div>
+    <div class="sidebar">
+        <div class="nav-item active" onclick="filter('all')"><span class="material-icons-outlined">lightbulb</span><span class="nav-text">Notes</span></div>
+        <div class="nav-item" onclick="filter('reminders')"><span class="material-icons-outlined">notifications</span><span class="nav-text">Reminders</span></div>
+        <div class="nav-item" onclick="filter('archive')"><span class="material-icons-outlined">archive</span><span class="nav-text">Archive</span></div>
+        <div class="nav-item" onclick="filter('trash')"><span class="material-icons-outlined">delete</span><span class="nav-text">Trash</span></div>
+    </div>
 
-        <div class="header">
-            <div class="brand">
-                <h1>Sarthak 2.1</h1>
-                <span>ANALYTICS MODULE</span>
-            </div>
-            <div class="header-actions">
-                <button class="icon-btn active" id="btnList" onclick="switchView('list')" title="List View">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                </button>
-                <button class="icon-btn" id="btnChart" onclick="switchView('chart')" title="Analytics View">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
-                </button>
-            </div>
+    <div class="main">
+        <div class="analytics-card">
+            <canvas id="chart"></canvas>
+            <div style="text-align:center; font-size:12px; margin-top:5px; color:#9aa0a6">Productivity</div>
         </div>
 
-        <div id="listView" class="view-section">
-            <div class="controls">
-                <div class="input-row">
-                    <input type="text" id="taskInput" placeholder="Enter new directive...">
-                </div>
-                <div class="options-row">
-                    <select id="catSelect">
-                        <option value="General">General</option>
-                        <option value="Code">Code</option>
-                        <option value="Study">Study</option>
-                        <option value="Fitness">Fitness</option>
-                    </select>
-                    <select id="prioSelect">
-                        <option value="Normal">Normal Prio</option>
-                        <option value="High">High Prio</option>
-                        <option value="Low">Low Prio</option>
-                    </select>
-                    <button class="add-btn" onclick="addTask()">ADD</button>
-                </div>
+        <div class="input-box" onclick="expandInput()">
+            <input type="text" id="newTitle" placeholder="Title">
+            <textarea id="newText" placeholder="Take a note... (AI Auto-Sorts)" rows="1"></textarea>
+            
+            <div class="tools" id="tools">
+                <span class="material-icons-outlined tool-btn" onclick="triggerImage()" title="Image">image</span>
+                <span class="material-icons-outlined tool-btn" onclick="openDrawing()" title="Draw">brush</span>
+                <span class="material-icons-outlined tool-btn" onclick="toggleVoice()" id="micBtn" title="Voice">mic</span>
+                <input type="datetime-local" id="newDate" style="background:#303134; border:none; color:white; color-scheme:dark;">
+                <div style="flex:1"></div>
+                <button onclick="addNote()" style="background:var(--accent); border:none; padding:8px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">Save</button>
             </div>
-
-            <div class="task-list" id="list">
-                </div>
+            <input type="file" id="imgInput" style="display:none" onchange="handleImage(this)">
         </div>
 
-        <div id="analyticsView" class="view-section">
-            <div class="chart-container">
-                <canvas id="categoryChart"></canvas>
-            </div>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="statCompletion">0%</div>
-                    <div class="stat-label">Completion Rate</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="statHighPrio">0</div>
-                    <div class="stat-label">High Priority</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="statPending">0</div>
-                    <div class="stat-label">Pending Tasks</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="statTotal">0</div>
-                    <div class="stat-label">Total Volume</div>
-                </div>
-            </div>
-        </div>
+        <div class="grid" id="grid"></div>
+    </div>
 
-        <div class="footer">
-            <span id="sysStatus" style="color:var(--success)">SYSTEM ONLINE</span>
-            <span>AUTO-RESET: ON</span>
+    <div class="modal-overlay" id="drawModal">
+        <div style="text-align:center;">
+            <canvas id="canvas" width="400" height="400"></canvas><br>
+            <button onclick="saveDrawing()" style="background:var(--accent); border:none; padding:10px; margin-top:10px; cursor:pointer;">Save</button>
+            <button onclick="closeDrawing()" style="background:white; border:none; padding:10px; margin-top:10px; cursor:pointer;">Cancel</button>
         </div>
     </div>
 
-<script>
-    const API_URL = "https://sarthak-tasks-backend.onrender.com";
-    
-    // State
-    let currentTasks = [];
-    let myChart = null;
+    <div class="modal-overlay" id="editModal">
+        <div class="modal" id="editContent">
+            <input type="text" id="editTitle" style="width:100%; background:none; border:none; color:white; font-size:22px; margin-bottom:15px; font-weight:bold; outline:none;">
+            <textarea id="editText" style="width:100%; background:none; border:none; color:#e8eaed; font-size:16px; min-height:200px; resize:none; outline:none; font-family:inherit;"></textarea>
+            <div class="colors">
+                <div class="color-dot" style="background:#202124" onclick="setEditColor('#202124')"></div>
+                <div class="color-dot" style="background:#5c2b29" onclick="setEditColor('#5c2b29')"></div>
+                <div class="color-dot" style="background:#1e3a2f" onclick="setEditColor('#1e3a2f')"></div>
+                <div class="color-dot" style="background:#42275e" onclick="setEditColor('#42275e')"></div>
+            </div>
+            <div style="text-align:right; margin-top:20px;">
+                <button onclick="deleteCurrentNote()" style="color:#ef4444; background:none; border:none; cursor:pointer; margin-right:20px;">Delete</button>
+                <button onclick="saveEdit()" style="background:var(--accent); border:none; padding:8px 20px; border-radius:4px; cursor:pointer;">Done</button>
+            </div>
+        </div>
+    </div>
 
-    const dom = {
-        input: document.getElementById('taskInput'),
-        cat: document.getElementById('catSelect'),
-        prio: document.getElementById('prioSelect'),
-        list: document.getElementById('list'),
-        loader: document.getElementById('loader'),
-        sysStatus: document.getElementById('sysStatus'),
-        views: {
-            list: document.getElementById('listView'),
-            chart: document.getElementById('analyticsView')
-        },
-        btns: {
-            list: document.getElementById('btnList'),
-            chart: document.getElementById('btnChart')
-        },
-        stats: {
-            completion: document.getElementById('statCompletion'),
-            high: document.getElementById('statHighPrio'),
-            pending: document.getElementById('statPending'),
-            total: document.getElementById('statTotal')
+    <script>
+        let notes = [];
+        let currentNoteId = null;
+        let chart = null;
+        let isDrawing = false, ctx;
+
+        // --- CORE LOGIC ---
+        async function load() {
+            const res = await fetch('/api/notes');
+            const data = await res.json();
+            notes = data.notes;
+            render();
+            updateChart();
         }
-    };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        loadTasks();
-        dom.input.addEventListener('keydown', e => e.key === 'Enter' && addTask());
-    });
-
-    // --- NAVIGATION ---
-    function switchView(viewName) {
-        // Toggle DOM visibility
-        dom.views.list.style.display = viewName === 'list' ? 'flex' : 'none';
-        dom.views.chart.style.display = viewName === 'chart' ? 'block' : 'none';
-        
-        // Toggle Buttons
-        dom.btns.list.classList.toggle('active', viewName === 'list');
-        dom.btns.chart.classList.toggle('active', viewName === 'chart');
-
-        if(viewName === 'chart') updateAnalytics();
-    }
-
-    // --- CORE LOGIC ---
-    async function loadTasks() {
-        toggleLoader(true);
-        dom.sysStatus.innerText = "SYNCING...";
-        dom.sysStatus.style.color = "#f59e0b";
-
-        try {
-            const res = await fetch(`${API_URL}/tasks`);
-            if(!res.ok) throw new Error("Server Error");
-            currentTasks = await res.json(); // Save to global state
+        function render() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            // Sort: Pinned first
+            const sorted = [...notes].sort((a,b) => (b.is_pinned - a.is_pinned));
             
-            render(currentTasks);
-            dom.sysStatus.innerText = "SYSTEM ONLINE";
-            dom.sysStatus.style.color = "#10b981";
-        } catch (err) {
-            console.error(err);
-            dom.sysStatus.innerText = "CONNECTION FAILED";
-            dom.sysStatus.style.color = "#ef4444";
-        } finally {
-            toggleLoader(false);
-        }
-    }
-
-    async function addTask() {
-        const text = dom.input.value.trim();
-        if(!text) return;
-        toggleLoader(true);
-        const payload = { task: text, category: dom.cat.value, priority: dom.prio.value };
-
-        try {
-            await fetch(`${API_URL}/add`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(payload)
+            sorted.forEach(note => {
+                const el = document.createElement('div');
+                el.className = 'note-card';
+                el.style.backgroundColor = note.color;
+                el.innerHTML = `
+                    <span class="material-icons-outlined pin-icon ${note.is_pinned ? 'pinned' : ''}" onclick="event.stopPropagation(); togglePin('${note.id}')">push_pin</span>
+                    <div style="font-weight:bold; margin-bottom:8px">${note.title}</div>
+                    <div style="white-space: pre-wrap;">${note.text}</div>
+                    ${note.due_date ? `<div class="due-date">⏰ ${new Date(note.due_date).toLocaleString()}</div>` : ''}
+                `;
+                el.onclick = () => openEdit(note);
+                grid.appendChild(el);
             });
-            dom.input.value = "";
-            loadTasks();
-        } catch(err) { alert("Failed to add task"); }
-        finally { toggleLoader(false); }
-    }
-
-    async function toggleTask(index) {
-        document.getElementById(`task-${index}`).classList.toggle('done');
-        try {
-            await fetch(`${API_URL}/toggle/${index}`, { method: "POST" });
-            loadTasks(); 
-        } catch(err) { loadTasks(); }
-    }
-
-    async function deleteTask(index) {
-        if(!confirm("Confirm Deletion?")) return;
-        toggleLoader(true);
-        try {
-            await fetch(`${API_URL}/delete/${index}`, { method: "DELETE" });
-            loadTasks();
-        } catch(err) { alert("Delete failed"); }
-        finally { toggleLoader(false); }
-    }
-
-    // --- RENDER & ANALYTICS ---
-
-    function render(tasks) {
-        dom.list.innerHTML = "";
-        if(tasks.length === 0) {
-            dom.list.innerHTML = `<div style="text-align:center; padding:30px; color:#64748b;">No active directives.</div>`;
-            return;
         }
 
-        tasks.forEach((t, i) => {
-            const isDone = t.done ? 'done' : '';
-            const isHigh = t.priority === 'High' ? 'high' : t.priority === 'Normal' ? 'med' : 'low';
+        async function addNote() {
+            const title = document.getElementById('newTitle').value;
+            const text = document.getElementById('newText').value;
+            const date = document.getElementById('newDate').value;
             
-            const html = `
-                <div class="task-card ${isDone}" id="task-${i}">
-                    <div class="checkbox" onclick="toggleTask(${i})"></div>
-                    <div class="task-content">
-                        <div class="task-meta">
-                            <span class="badge ${isHigh}">${t.priority}</span>
-                            <span class="badge">${t.category}</span>
-                        </div>
-                        <div class="task-text">${escapeHtml(t.text)}</div>
-                    </div>
-                    <button class="delete-btn" onclick="deleteTask(${i})">×</button>
-                </div>
-            `;
-            dom.list.insertAdjacentHTML('beforeend', html);
-        });
-        
-        // Update charts if we are on analytics view
-        if(dom.views.chart.style.display === 'block') updateAnalytics();
-    }
+            await fetch('/api/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title, text, due_date: date})
+            });
+            document.getElementById('newTitle').value = '';
+            document.getElementById('newText').value = '';
+            document.getElementById('newTitle').style.display = 'none';
+            document.getElementById('tools').style.display = 'none';
+            load();
+        }
 
-    function updateAnalytics() {
-        if (!currentTasks.length) return;
+        // --- TOOLS ---
+        function expandInput() {
+            document.getElementById('newTitle').style.display = 'block';
+            document.getElementById('tools').style.display = 'flex';
+            document.getElementById('newText').rows = 3;
+        }
 
-        // 1. Calculate Stats
-        const total = currentTasks.length;
-        const done = currentTasks.filter(t => t.done).length;
-        const highPrio = currentTasks.filter(t => !t.done && t.priority === 'High').length;
-        const pending = total - done;
+        function toggleVoice() {
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.onstart = () => document.getElementById('micBtn').classList.add('active-mic');
+            recognition.onresult = (e) => document.getElementById('newText').value += e.results[0][0].transcript + " ";
+            recognition.onend = () => document.getElementById('micBtn').classList.remove('active-mic');
+            recognition.start();
+        }
 
-        // 2. Update Grid
-        dom.stats.total.innerText = total;
-        dom.stats.pending.innerText = pending;
-        dom.stats.high.innerText = highPrio;
-        dom.stats.completion.innerText = Math.round((done / total) * 100) + "%";
+        function triggerImage() { document.getElementById('imgInput').click(); }
+        function handleImage(input) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                document.getElementById('newText').value = "Scanning Image...";
+                const res = await fetch('/api/analyze_image', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({image: e.target.result})
+                });
+                const data = await res.json();
+                document.getElementById('newText').value = data.text;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
 
-        // 3. Prepare Chart Data (Category Distribution)
-        const categories = {};
-        currentTasks.forEach(t => {
-            if(!t.done) { // Only chart pending tasks? Or all? Let's do ALL.
-                categories[t.category] = (categories[t.category] || 0) + 1;
+        // --- DRAWING ---
+        function openDrawing() {
+            document.getElementById('drawModal').style.display = 'flex';
+            const canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            ctx.lineWidth = 3; ctx.lineCap = 'round';
+            canvas.onmousedown = (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
+            canvas.onmousemove = (e) => { if(isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
+            canvas.onmouseup = () => isDrawing = false;
+        }
+        function closeDrawing() { document.getElementById('drawModal').style.display = 'none'; }
+        function saveDrawing() {
+            document.getElementById('newText').value += "\n[Drawing Attached 🎨]";
+            closeDrawing();
+        }
+
+        // --- EDITING ---
+        function openEdit(note) {
+            currentNoteId = note.id;
+            document.getElementById('editTitle').value = note.title;
+            document.getElementById('editText').value = note.text;
+            document.getElementById('editContent').style.backgroundColor = note.color;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        function setEditColor(c) { document.getElementById('editContent').style.backgroundColor = c; }
+        async function saveEdit() {
+            const title = document.getElementById('editTitle').value;
+            const text = document.getElementById('editText').value;
+            const color = document.getElementById('editContent').style.backgroundColor;
+            await fetch('/api/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: currentNoteId, title, text, color})
+            });
+            document.getElementById('editModal').style.display = 'none';
+            load();
+        }
+        async function deleteCurrentNote() {
+            if(confirm('Delete?')) {
+                await fetch('/api/delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id: currentNoteId})
+                });
+                document.getElementById('editModal').style.display = 'none';
+                load();
             }
-        });
+        }
+        async function togglePin(id) {
+            const note = notes.find(n => n.id === id);
+            note.is_pinned = !note.is_pinned;
+            await fetch('/api/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(note)
+            });
+            load();
+        }
 
-        const ctx = document.getElementById('categoryChart').getContext('2d');
-        
-        // Destroy old chart to prevent glitching
-        if(myChart) myChart.destroy();
+        // --- CHART ---
+        function updateChart() {
+            const ctx = document.getElementById('chart').getContext('2d');
+            const counts = { Todo: 0, Shopping: 0, Idea: 0, Work: 0 };
+            notes.forEach(n => counts[n.category] = (counts[n.category] || 0) + 1);
+            
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{ data: Object.values(counts), backgroundColor: ['#f28b82', '#81c995', '#d7aefb', '#aecbfa'], borderWidth: 0 }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
+        }
 
-        // Create New Chart
-        myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(categories),
-                datasets: [{
-                    data: Object.values(categories),
-                    backgroundColor: ['#38bdf8', '#818cf8', '#34d399', '#f472b6'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right', labels: { color: '#94a3b8', font: {family: 'JetBrains Mono'} } }
-                }
-            }
-        });
-    }
-
-    function toggleLoader(show) { dom.loader.style.display = show ? 'block' : 'none'; }
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-</script>
+        load();
+    </script>
 </body>
 </html>
