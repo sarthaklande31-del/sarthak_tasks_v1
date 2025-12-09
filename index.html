@@ -3,280 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartSort Ultimate</title>
+    <title>SmartSort Notes AI</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --bg: #202124; --sidebar: #202124; --card: #202124; --border: #5f6368; --text: #e8eaed; --accent: #fbbc04; }
-        body { background: var(--bg); color: var(--text); font-family: 'Roboto', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-
-        /* SIDEBAR */
-        .sidebar { width: 80px; background: var(--sidebar); display: flex; flex-direction: column; align-items: center; padding-top: 20px; transition: 0.3s; border-right: 1px solid transparent; }
-        .sidebar:hover { width: 250px; align-items: flex-start; padding-left: 20px; border-right: 1px solid var(--border); }
-        .nav-item { display: flex; align-items: center; gap: 20px; padding: 15px; cursor: pointer; color: #9aa0a6; width: 100%; border-radius: 0 25px 25px 0; }
-        .nav-item:hover, .nav-item.active { background: #41331c; color: var(--accent); }
-        .nav-text { display: none; white-space: nowrap; font-size: 16px; font-weight: 500; }
-        .sidebar:hover .nav-text { display: block; }
-
-        /* MAIN AREA */
-        .main { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; position: relative;}
-
-        /* ANALYTICS (Floating Top Right) */
-        .analytics-card { position: absolute; top: 20px; right: 30px; width: 150px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: none; }
-        @media (min-width: 1000px) { .analytics-card { display: block; } }
-
-        /* INPUT BOX */
-        .input-box { background: #202124; width: 100%; max-width: 600px; border-radius: 8px; border: 1px solid var(--border); padding: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 40px; }
-        .input-box input, .input-box textarea { width: 100%; background: none; border: none; color: white; outline: none; display: block; }
-        .input-box input { font-weight: bold; font-size: 16px; margin-bottom: 10px; display: none; }
-        .input-box textarea { font-size: 16px; resize: none; font-family: inherit; }
+        :root { --bg: #202124; --card: #303134; --text: #e8eaed; --accent: #fbbc04; --border: #5f6368; }
+        body { background: var(--bg); color: var(--text); font-family: 'Google Sans', Roboto, sans-serif; padding: 20px; margin: 0; }
         
-        .tools { display: none; gap: 15px; margin-top: 10px; color: #9aa0a6; align-items: center; }
-        .tool-btn { cursor: pointer; } .tool-btn:hover { color: white; }
-        .active-mic { color: #f28b82 !important; animation: pulse 1s infinite; }
-
-        /* GRID */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; width: 100%; max-width: 1200px; }
-        .note-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 15px; position: relative; transition: 0.2s; white-space: pre-wrap; min-height: 100px; cursor: default; }
-        .note-card:hover { border-color: #9aa0a6; }
+        /* --- The Input Area (Keep Style) --- */
+        .input-wrapper {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 5px;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.6);
+            max-width: 600px;
+            margin: 20px auto 40px auto;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
         
-        .pin-icon { position: absolute; top: 10px; right: 10px; opacity: 0; cursor: pointer; transform: rotate(45deg); }
-        .note-card:hover .pin-icon { opacity: 1; }
-        .pinned { opacity: 1 !important; color: var(--accent); }
-        
-        .due-date { font-size: 11px; border: 1px solid #5f6368; border-radius: 10px; padding: 2px 8px; display: inline-block; margin-top: 8px; color: #9aa0a6; }
+        input {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
 
-        /* MODALS */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 200; justify-content: center; align-items: center; }
-        .modal { background: var(--bg); width: 600px; border-radius: 8px; padding: 20px; border: 1px solid var(--border); }
-        canvas { background: white; border-radius: 8px; cursor: crosshair; }
-        
-        .colors { display: flex; gap: 10px; margin-top: 15px; }
-        .color-dot { width: 25px; height: 25px; border-radius: 50%; border: 1px solid #5f6368; cursor: pointer; }
+        /* Action Buttons */
+        .icon-btn {
+            background: none;
+            border: none;
+            color: #9aa0a6;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .icon-btn.recording { color: #f28b82; animation: pulse 1s infinite; }
 
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        /* --- The Grid Layout --- */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } } 
+
+        .column { background: transparent; padding: 10px; border-radius: 15px; }
+        .col-header { 
+            font-size: 12px; font-weight: bold; letter-spacing: 1px; 
+            text-transform: uppercase; color: #9aa0a6; margin-bottom: 15px; 
+            display: flex; align-items: center; gap: 5px;
+        }
+
+        /* --- Note Cards --- */
+        .note { 
+            background: var(--card); 
+            padding: 15px; 
+            margin-bottom: 10px; 
+            border-radius: 8px; 
+            border: 1px solid transparent; 
+            transition: 0.2s;
+            position: relative;
+        }
+        .note:hover { border-color: #9aa0a6; }
+        
+        .note-content { font-size: 14px; line-height: 1.4; white-space: pre-wrap; }
+        
+        .note-footer {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+            opacity: 0; /* Hidden until hover */
+            transition: 0.2s;
+        }
+        .note:hover .note-footer { opacity: 1; }
+        
+        .sm-btn { background: none; border: none; color: #9aa0a6; cursor: pointer; font-size: 16px; }
+        .sm-btn:hover { color: #f28b82; }
+
+        /* Category Colors (Subtle borders) */
+        #col-todo .note { border-left: 3px solid #fbbc04; }
+        #col-shopping .note { border-left: 3px solid #8ab4f8; }
+        #col-ideas .note { border-left: 3px solid #ccff90; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        
+        /* Loading Overlay */
+        #loading { display: none; position: absolute; right: 60px; color: var(--accent); font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="nav-item active" onclick="filter('all')"><span class="material-icons-outlined">lightbulb</span><span class="nav-text">Notes</span></div>
-        <div class="nav-item" onclick="filter('reminders')"><span class="material-icons-outlined">notifications</span><span class="nav-text">Reminders</span></div>
-        <div class="nav-item" onclick="filter('archive')"><span class="material-icons-outlined">archive</span><span class="nav-text">Archive</span></div>
-        <div class="nav-item" onclick="filter('trash')"><span class="material-icons-outlined">delete</span><span class="nav-text">Trash</span></div>
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; justify-content: center;">
+        <span class="material-icons-outlined" style="color:var(--accent); font-size: 30px;">lightbulb</span>
+        <h2 style="margin:0;">SmartSort Notes</h2>
     </div>
 
-    <div class="main">
-        <div class="analytics-card">
-            <canvas id="chart"></canvas>
-            <div style="text-align:center; font-size:12px; margin-top:5px; color:#9aa0a6">Productivity</div>
-        </div>
-
-        <div class="input-box" onclick="expandInput()">
-            <input type="text" id="newTitle" placeholder="Title">
-            <textarea id="newText" placeholder="Take a note... (AI Auto-Sorts)" rows="1"></textarea>
-            
-            <div class="tools" id="tools">
-                <span class="material-icons-outlined tool-btn" onclick="triggerImage()" title="Image">image</span>
-                <span class="material-icons-outlined tool-btn" onclick="openDrawing()" title="Draw">brush</span>
-                <span class="material-icons-outlined tool-btn" onclick="toggleVoice()" id="micBtn" title="Voice">mic</span>
-                <input type="datetime-local" id="newDate" style="background:#303134; border:none; color:white; color-scheme:dark;">
-                <div style="flex:1"></div>
-                <button onclick="addNote()" style="background:var(--accent); border:none; padding:8px 20px; border-radius:4px; font-weight:bold; cursor:pointer;">Save</button>
-            </div>
-            <input type="file" id="imgInput" style="display:none" onchange="handleImage(this)">
-        </div>
-
-        <div class="grid" id="grid"></div>
+    <div class="input-wrapper">
+        <input type="text" id="userInput" placeholder="Type or speak... (e.g., 'Buy milk and eggs')">
+        <span id="loading">AI Sorting...</span>
+        
+        <button class="icon-btn" onclick="toggleVoice()" id="micBtn" title="Speak">
+            <span class="material-icons-outlined">mic</span>
+        </button>
+        
+        <button class="icon-btn" onclick="addSmartNote()" title="Add Note">
+            <span class="material-icons-outlined">send</span>
+        </button>
     </div>
 
-    <div class="modal-overlay" id="drawModal">
-        <div style="text-align:center;">
-            <canvas id="canvas" width="400" height="400"></canvas><br>
-            <button onclick="saveDrawing()" style="background:var(--accent); border:none; padding:10px; margin-top:10px; cursor:pointer;">Save</button>
-            <button onclick="closeDrawing()" style="background:white; border:none; padding:10px; margin-top:10px; cursor:pointer;">Cancel</button>
+    <div class="grid">
+        <div class="column" id="col-todo">
+            <div class="col-header"><span class="material-icons-outlined">check_circle</span> Tasks & Todo</div>
+            <div id="list-todo"></div>
         </div>
-    </div>
 
-    <div class="modal-overlay" id="editModal">
-        <div class="modal" id="editContent">
-            <input type="text" id="editTitle" style="width:100%; background:none; border:none; color:white; font-size:22px; margin-bottom:15px; font-weight:bold; outline:none;">
-            <textarea id="editText" style="width:100%; background:none; border:none; color:#e8eaed; font-size:16px; min-height:200px; resize:none; outline:none; font-family:inherit;"></textarea>
-            <div class="colors">
-                <div class="color-dot" style="background:#202124" onclick="setEditColor('#202124')"></div>
-                <div class="color-dot" style="background:#5c2b29" onclick="setEditColor('#5c2b29')"></div>
-                <div class="color-dot" style="background:#1e3a2f" onclick="setEditColor('#1e3a2f')"></div>
-                <div class="color-dot" style="background:#42275e" onclick="setEditColor('#42275e')"></div>
-            </div>
-            <div style="text-align:right; margin-top:20px;">
-                <button onclick="deleteCurrentNote()" style="color:#ef4444; background:none; border:none; cursor:pointer; margin-right:20px;">Delete</button>
-                <button onclick="saveEdit()" style="background:var(--accent); border:none; padding:8px 20px; border-radius:4px; cursor:pointer;">Done</button>
-            </div>
+        <div class="column" id="col-shopping">
+            <div class="col-header"><span class="material-icons-outlined">shopping_cart</span> Shopping</div>
+            <div id="list-shopping"></div>
+        </div>
+
+        <div class="column" id="col-ideas">
+            <div class="col-header"><span class="material-icons-outlined">emoji_objects</span> Ideas & Thoughts</div>
+            <div id="list-ideas"></div>
         </div>
     </div>
 
     <script>
-        let notes = [];
-        let currentNoteId = null;
-        let chart = null;
-        let isDrawing = false, ctx;
-
-        // --- CORE LOGIC ---
-        async function load() {
-            const res = await fetch('/api/notes');
-            const data = await res.json();
-            notes = data.notes;
-            render();
-            updateChart();
-        }
-
-        function render() {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
-            // Sort: Pinned first
-            const sorted = [...notes].sort((a,b) => (b.is_pinned - a.is_pinned));
+        // --- VOICE RECOGNITION SETUP ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
             
-            sorted.forEach(note => {
-                const el = document.createElement('div');
-                el.className = 'note-card';
-                el.style.backgroundColor = note.color;
-                el.innerHTML = `
-                    <span class="material-icons-outlined pin-icon ${note.is_pinned ? 'pinned' : ''}" onclick="event.stopPropagation(); togglePin('${note.id}')">push_pin</span>
-                    <div style="font-weight:bold; margin-bottom:8px">${note.title}</div>
-                    <div style="white-space: pre-wrap;">${note.text}</div>
-                    ${note.due_date ? `<div class="due-date">⏰ ${new Date(note.due_date).toLocaleString()}</div>` : ''}
-                `;
-                el.onclick = () => openEdit(note);
-                grid.appendChild(el);
-            });
-        }
-
-        async function addNote() {
-            const title = document.getElementById('newTitle').value;
-            const text = document.getElementById('newText').value;
-            const date = document.getElementById('newDate').value;
-            
-            await fetch('/api/add', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({title, text, due_date: date})
-            });
-            document.getElementById('newTitle').value = '';
-            document.getElementById('newText').value = '';
-            document.getElementById('newTitle').style.display = 'none';
-            document.getElementById('tools').style.display = 'none';
-            load();
-        }
-
-        // --- TOOLS ---
-        function expandInput() {
-            document.getElementById('newTitle').style.display = 'block';
-            document.getElementById('tools').style.display = 'flex';
-            document.getElementById('newText').rows = 3;
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('userInput').value = transcript;
+                stopVoice();
+                // Optional: Auto-submit after speaking
+                // addSmartNote(); 
+            };
+            recognition.onerror = (event) => { stopVoice(); console.log("Voice error", event); };
+        } else {
+            console.log("Browser does not support voice");
+            document.getElementById('micBtn').style.display = 'none';
         }
 
         function toggleVoice() {
-            const recognition = new webkitSpeechRecognition();
-            recognition.lang = 'en-US';
-            recognition.onstart = () => document.getElementById('micBtn').classList.add('active-mic');
-            recognition.onresult = (e) => document.getElementById('newText').value += e.results[0][0].transcript + " ";
-            recognition.onend = () => document.getElementById('micBtn').classList.remove('active-mic');
-            recognition.start();
-        }
-
-        function triggerImage() { document.getElementById('imgInput').click(); }
-        function handleImage(input) {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                document.getElementById('newText').value = "Scanning Image...";
-                const res = await fetch('/api/analyze_image', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({image: e.target.result})
-                });
-                const data = await res.json();
-                document.getElementById('newText').value = data.text;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-
-        // --- DRAWING ---
-        function openDrawing() {
-            document.getElementById('drawModal').style.display = 'flex';
-            const canvas = document.getElementById('canvas');
-            ctx = canvas.getContext('2d');
-            ctx.lineWidth = 3; ctx.lineCap = 'round';
-            canvas.onmousedown = (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
-            canvas.onmousemove = (e) => { if(isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
-            canvas.onmouseup = () => isDrawing = false;
-        }
-        function closeDrawing() { document.getElementById('drawModal').style.display = 'none'; }
-        function saveDrawing() {
-            document.getElementById('newText').value += "\n[Drawing Attached 🎨]";
-            closeDrawing();
-        }
-
-        // --- EDITING ---
-        function openEdit(note) {
-            currentNoteId = note.id;
-            document.getElementById('editTitle').value = note.title;
-            document.getElementById('editText').value = note.text;
-            document.getElementById('editContent').style.backgroundColor = note.color;
-            document.getElementById('editModal').style.display = 'flex';
-        }
-        function setEditColor(c) { document.getElementById('editContent').style.backgroundColor = c; }
-        async function saveEdit() {
-            const title = document.getElementById('editTitle').value;
-            const text = document.getElementById('editText').value;
-            const color = document.getElementById('editContent').style.backgroundColor;
-            await fetch('/api/update', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: currentNoteId, title, text, color})
-            });
-            document.getElementById('editModal').style.display = 'none';
-            load();
-        }
-        async function deleteCurrentNote() {
-            if(confirm('Delete?')) {
-                await fetch('/api/delete', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({id: currentNoteId})
-                });
-                document.getElementById('editModal').style.display = 'none';
-                load();
+            const btn = document.getElementById('micBtn');
+            if (btn.classList.contains('recording')) {
+                stopVoice();
+            } else {
+                startVoice();
             }
         }
-        async function togglePin(id) {
-            const note = notes.find(n => n.id === id);
-            note.is_pinned = !note.is_pinned;
-            await fetch('/api/update', {
+
+        function startVoice() {
+            if(recognition) {
+                recognition.start();
+                document.getElementById('micBtn').classList.add('recording');
+                document.getElementById('userInput').placeholder = "Listening...";
+            }
+        }
+
+        function stopVoice() {
+            if(recognition) {
+                recognition.stop();
+                document.getElementById('micBtn').classList.remove('recording');
+                document.getElementById('userInput').placeholder = "Type or speak...";
+            }
+        }
+
+        // --- APP LOGIC ---
+        async function loadNotes() {
+            const res = await fetch('/get_notes');
+            const data = await res.json();
+            
+            ['todo', 'shopping', 'ideas'].forEach(cat => {
+                const list = document.getElementById(`list-${cat}`);
+                list.innerHTML = '';
+                data[cat].forEach(note => {
+                    // Create checkbox style text if needed, for now simple text
+                    list.innerHTML += `
+                        <div class="note">
+                            <div class="note-content">${note.text}</div>
+                            <div class="note-footer">
+                                <button class="sm-btn" onclick="deleteNote('${note.id}', '${cat}')">
+                                    <span class="material-icons-outlined">delete</span>
+                                </button>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        async function addSmartNote() {
+            const input = document.getElementById('userInput');
+            const text = input.value;
+            if (!text) return;
+
+            document.getElementById('loading').style.display = 'block';
+
+            await fetch('/add_note', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(note)
+                body: JSON.stringify({text: text})
             });
-            load();
+
+            document.getElementById('loading').style.display = 'none';
+            input.value = '';
+            loadNotes();
         }
 
-        // --- CHART ---
-        function updateChart() {
-            const ctx = document.getElementById('chart').getContext('2d');
-            const counts = { Todo: 0, Shopping: 0, Idea: 0, Work: 0 };
-            notes.forEach(n => counts[n.category] = (counts[n.category] || 0) + 1);
-            
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(counts),
-                    datasets: [{ data: Object.values(counts), backgroundColor: ['#f28b82', '#81c995', '#d7aefb', '#aecbfa'], borderWidth: 0 }]
-                },
-                options: { plugins: { legend: { display: false } } }
+        async function deleteNote(id, category) {
+            await fetch('/delete_note', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id, category: category})
             });
+            loadNotes();
         }
 
-        load();
+        // Load initially
+        loadNotes();
     </script>
 </body>
 </html>
